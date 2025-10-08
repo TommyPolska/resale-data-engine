@@ -6,10 +6,92 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from data_fetch import fetch_completed_or_live
 
+# --- (optional) nicer dark chart defaults ---
+plt.rcParams.update({
+    "figure.facecolor": "#131A2B",
+    "axes.facecolor":   "#131A2B",
+    "axes.edgecolor":   "#E6F7FF",
+    "axes.labelcolor":  "#E6F7FF",
+    "xtick.color":      "#BFEFFF",
+    "ytick.color":      "#BFEFFF",
+    "text.color":       "#E6F7FF",
+    "axes.titleweight": "bold"
+})
+
+# --- ONE definition of the CSS injector (keep only this one) ---
+def inject_miami_css():
+    st.markdown("""
+    <style>
+    .stApp {
+        background: radial-gradient(1200px 800px at 10% 10%, rgba(255,45,155,0.12), transparent 40%),
+                    radial-gradient(1200px 900px at 90% 20%, rgba(0,240,255,0.10), transparent 45%),
+                    radial-gradient(1000px 900px at 50% 100%, rgba(255,45,155,0.08), transparent 50%),
+                    #0B1020;
+    }
+    * { border-radius: 12px !important; }
+    h1, .stMarkdown h1, .stTitle > div > h1 {
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.25), 0 0 20px rgba(255,45,155,0.35);
+    }
+    .stTabs [data-baseweb="tab-list"] { gap: 6px; }
+    .stTabs [data-baseweb="tab"] {
+        background: linear-gradient(135deg, rgba(255,45,155,0.14), rgba(0,240,255,0.10));
+        color: #E6F7FF;
+        border: 1px solid rgba(255,45,155,0.25);
+        padding: 10px 16px;
+        transition: transform .08s ease;
+    }
+    .stTabs [data-baseweb="tab"]:hover { transform: translateY(-1px); }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(255,45,155,0.25), rgba(0,240,255,0.20)) !important;
+        border-color: rgba(0,240,255,0.35) !important;
+        box-shadow: 0 0 0 1px rgba(0,240,255,0.15) inset, 0 8px 28px rgba(255,45,155,0.12);
+    }
+    .stButton > button, .st-download-button > button {
+        background: linear-gradient(135deg, #FF2D9B, #00F0FF);
+        color: #0B1020;
+        border: none;
+        font-weight: 700;
+        letter-spacing: .3px;
+        box-shadow: 0 8px 28px rgba(255,45,155,0.25), 0 2px 8px rgba(0,240,255,0.15);
+        transition: transform .06s ease, filter .1s ease;
+    }
+    .stButton > button:hover, .st-download-button > button:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div, .stFileUploader {
+        background: rgba(19,26,43,0.9) !important;
+        color: #E6F7FF !important;
+        border: 1px solid rgba(0,240,255,0.25) !important;
+        box-shadow: inset 0 0 0 1px rgba(255,45,155,0.15);
+    }
+    div[data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(0,240,255,0.12), rgba(255,45,155,0.12));
+        border: 1px solid rgba(0,240,255,0.35);
+        padding: 14px;
+        box-shadow: 0 6px 20px rgba(0,240,255,0.10);
+    }
+    div[data-testid="stDataFrame"] {
+        background: rgba(19,26,43,0.65);
+        border: 1px solid rgba(0,240,255,0.25);
+        box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+        overflow: hidden;
+    }
+    div[data-testid="stStatus"] {
+        border: 1px solid rgba(255,45,155,0.35);
+        background: rgba(255,45,155,0.10);
+    }
+    canvas { border-radius: 12px; }
+    </style>
+    """, unsafe_allow_html=True)
+
 load_dotenv()
 APP_ID = os.getenv("EBAY_APP_ID")
 
+# 👉 THIS is the line you asked about:
 st.set_page_config(page_title="IRL Market Analytics", layout="wide")
+
+# 👉 Call the CSS injector RIGHT AFTER set_page_config:
+inject_miami_css()
+
 st.title("📈 IRL Market Analytics (Sneakers → Everything)")
 
 # Two tabs: Search & Trends, Portfolio
