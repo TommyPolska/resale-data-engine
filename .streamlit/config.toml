@@ -1,0 +1,12 @@
+[theme]
+primaryColor="#FF2D9B"                # neon pink
+backgroundColor="#0B1020"             # deep navy
+secondaryBackgroundColor="#131A2B"    # card background
+textColor="#E6F7FF"                   # soft ice
+font="sans serif"
+
+[server]
+headless=true
+
+[browser]
+gatherUsageStats=false
