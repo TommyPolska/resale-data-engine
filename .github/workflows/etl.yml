@@ -2,12 +2,13 @@ name: Nightly eBay Backfill
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # every day at 03:00 UTC
-  workflow_dispatch:      # allow manual run
+    - cron: "0 3 * * *"     # daily at 03:00 UTC
+  workflow_dispatch:
 
 jobs:
   backfill:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -17,15 +18,33 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      # Decode the BASE64 secret into a real JSON file
+      - name: Prepare Firebase credentials file
+        env:
+          FIREBASE_CREDENTIALS_JSON_B64: ${{ secrets.FIREBASE_CREDENTIALS_JSON_B64 }}
+        run: |
+          python - <<'PY'
+          import os, base64, json, hashlib, sys, pathlib
+          b64 = os.environ['FIREBASE_CREDENTIALS_JSON_B64']
+          data = base64.b64decode(b64)
+          p = pathlib.Path('firebase.json')
+          p.write_bytes(data)
+          j = json.loads(data)
+          assert 'private_key' in j, "private_key missing in decoded JSON"
+          assert j['private_key'].startswith('-----BEGIN PRIVATE KEY-----'), "private_key header missing"
+          print("Wrote firebase.json (bytes):", len(data))
+          print("SHA256:", hashlib.sha256(data).hexdigest())
+          PY
 
       - name: Run backfill
         env:
           EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_CREDENTIALS_JSON: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase.json
         run: |
           python jobs/backfill_ebay.py
