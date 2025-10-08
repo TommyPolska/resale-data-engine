@@ -7,3 +7,4 @@ pandas
 scikit-learn
 google-cloud-firestore
 google-auth
+numpy
