@@ -3,3 +3,7 @@ python-dotenv
 pandas
 matplotlib
 streamlit
+pandas
+scikit-learn
+google-cloud-firestore
+google-auth
