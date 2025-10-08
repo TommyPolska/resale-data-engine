@@ -1,36 +1,43 @@
-# firebase_utils.py  — minimal + safe
-import json
+# firebase_utils.py — base64-only, minimal, robust
+import json, base64
 import streamlit as st
 from google.cloud import firestore
 from google.oauth2 import service_account
 
 @st.cache_resource
 def _db():
-    # Read secrets
+    """
+    Requires in Streamlit secrets:
+      [firebase]
+      credentials_b64 = "<base64 of your full firebase.json>"
+
+    We decode the exact bytes of your firebase.json, so there are no newline/escape issues.
+    """
     if "firebase" not in st.secrets:
         raise RuntimeError("Missing [firebase] in Streamlit secrets.")
 
     fb = st.secrets["firebase"]
+    cred_b64 = fb.get("credentials_b64")
+    if not isinstance(cred_b64, str) or not cred_b64.strip():
+        raise RuntimeError("firebase.credentials_b64 is missing or empty in secrets.")
 
-    # Support either a stringified JSON or raw fields
-    info = None
-    if isinstance(fb.get("credentials_json", None), str) and fb["credentials_json"].strip().startswith("{"):
-        try:
-            info = json.loads(fb["credentials_json"])
-        except Exception:
-            info = None
+    # Decode the full JSON
+    try:
+        raw = base64.b64decode(cred_b64)
+        info = json.loads(raw.decode("utf-8"))
+    except Exception as e:
+        raise RuntimeError(f"Failed to decode/parse firebase.credentials_b64: {e}")
 
-    if info is None:
-        info = dict(fb)  # raw fields pasted directly
-
-    # Normalize private_key newlines
-    if "private_key" in info and isinstance(info["private_key"], str):
-        info["private_key"] = info["private_key"].replace("\\n", "\n")
-
-    project_id = fb.get("project_id") or info.get("project_id")
+    # Validate minimal fields
+    project_id = info.get("project_id")
     if not project_id:
-        raise RuntimeError("Firebase project_id not found in secrets.")
+        raise RuntimeError("Decoded firebase.json is missing 'project_id'.")
 
+    pk = info.get("private_key", "")
+    if not (isinstance(pk, str) and pk.startswith("-----BEGIN PRIVATE KEY-----") and "END PRIVATE KEY" in pk):
+        raise RuntimeError("Decoded firebase.json has an invalid 'private_key' (PEM header/footer missing).")
+
+    # Build client
     creds = service_account.Credentials.from_service_account_info(info)
     return firestore.Client(project=project_id, credentials=creds)
 
